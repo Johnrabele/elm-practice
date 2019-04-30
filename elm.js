@@ -4952,6 +4952,11 @@ var elm$core$Set$toList = function (_n0) {
 	return elm$core$Dict$keys(dict);
 };
 var author$project$Main$init = {content: '', entries: _List_Nil, lastId: 0, selected: elm$core$Maybe$Nothing};
+var elm$core$Tuple$first = function (_n0) {
+	var x = _n0.a;
+	return x;
+};
+var author$project$Todos$id = elm$core$Tuple$first;
 var elm$core$Basics$apR = F2(
 	function (x, f) {
 		return f(x);
@@ -5050,20 +5055,45 @@ var elm$core$List$map = F2(
 			_List_Nil,
 			xs);
 	});
-var author$project$Main$transform = F3(
-	function (selected, newText, list) {
+var author$project$Main$rename = F2(
+	function (list, newTodo) {
 		return A2(
 			elm$core$List$map,
-			function (_n0) {
-				var id = _n0.a;
-				var text = _n0.b;
-				return _Utils_eq(selected, id) ? _Utils_Tuple2(selected, newText) : _Utils_Tuple2(id, text);
+			function (todo) {
+				return _Utils_eq(
+					newTodo.a,
+					author$project$Todos$id(todo)) ? newTodo : todo;
 			},
 			list);
+	});
+var author$project$Todos$changeText = F2(
+	function (_n0, string) {
+		var idT = _n0.a;
+		var value = _n0.b;
+		return _Utils_Tuple2(idT, string);
 	});
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
+var elm$core$Maybe$map = F2(
+	function (f, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return elm$core$Maybe$Just(
+				f(value));
+		} else {
+			return elm$core$Maybe$Nothing;
+		}
+	});
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
 var author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -5085,21 +5115,25 @@ var author$project$Main$update = F2(
 						lastId: model.lastId + 1
 					});
 			case 'Edit':
-				var id = msg.a;
-				var text = msg.b;
-				return _Utils_update(
-					model,
-					{
-						selected: elm$core$Maybe$Just(
-							_Utils_Tuple2(id, text))
-					});
-			default:
-				var id = msg.a;
+				var todo = msg.a;
 				var string = msg.b;
 				return _Utils_update(
 					model,
 					{
-						entries: A3(author$project$Main$transform, id, string, model.entries),
+						selected: elm$core$Maybe$Just(
+							A2(author$project$Todos$changeText, todo, string))
+					});
+			default:
+				return _Utils_update(
+					model,
+					{
+						entries: A2(
+							elm$core$Maybe$withDefault,
+							model.entries,
+							A2(
+								elm$core$Maybe$map,
+								author$project$Main$rename(model.entries),
+								model.selected)),
 						selected: elm$core$Maybe$Nothing
 					});
 		}
@@ -5155,10 +5189,6 @@ var elm$core$Array$compressNodes = F2(
 			}
 		}
 	});
-var elm$core$Tuple$first = function (_n0) {
-	var x = _n0.a;
-	return x;
-};
 var elm$core$Array$treeFromBuilder = F2(
 	function (nodeList, nodeListSize) {
 		treeFromBuilder:
@@ -5519,20 +5549,9 @@ var author$project$Main$Edit = F2(
 	function (a, b) {
 		return {$: 'Edit', a: a, b: b};
 	});
-var author$project$Main$Update = F2(
-	function (a, b) {
-		return {$: 'Update', a: a, b: b};
-	});
-var elm$core$Maybe$map = F2(
-	function (f, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return elm$core$Maybe$Just(
-				f(value));
-		} else {
-			return elm$core$Maybe$Nothing;
-		}
-	});
+var author$project$Main$Update = function (a) {
+	return {$: 'Update', a: a};
+};
 var author$project$Todos$isEditing = F2(
 	function (selected, todo) {
 		var selectedId = A2(elm$core$Maybe$map, elm$core$Tuple$first, selected);
@@ -5540,24 +5559,16 @@ var author$project$Todos$isEditing = F2(
 			selectedId,
 			elm$core$Maybe$Just(todo.a));
 	});
+var elm$core$Tuple$second = function (_n0) {
+	var y = _n0.b;
+	return y;
+};
+var author$project$Todos$text = elm$core$Tuple$second;
 var elm$core$Basics$composeR = F3(
 	function (f, g, x) {
 		return g(
 			f(x));
 	});
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
-var elm$core$Tuple$second = function (_n0) {
-	var y = _n0.b;
-	return y;
-};
 var elm$html$Html$div = _VirtualDom_node('div');
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$label = _VirtualDom_node('label');
@@ -5613,21 +5624,17 @@ var elm$html$Html$Events$onInput = function (tagger) {
 			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
 };
 var author$project$Main$viewEntry = F2(
-	function (selected, _n0) {
-		var id = _n0.a;
-		var entry = _n0.b;
-		var isEditing = A2(
-			author$project$Todos$isEditing,
-			selected,
-			_Utils_Tuple2(id, entry));
+	function (selected, todo) {
+		var isEditing = A2(author$project$Todos$isEditing, selected, todo);
 		var editingAttributes = isEditing ? _List_fromArray(
 			[
 				elm$html$Html$Attributes$class('editing')
 			]) : _List_Nil;
 		var editValue = A3(
 			elm$core$Basics$composeR,
-			elm$core$Maybe$map(elm$core$Tuple$second),
-			elm$core$Maybe$withDefault(entry),
+			elm$core$Maybe$map(author$project$Todos$text),
+			elm$core$Maybe$withDefault(
+				author$project$Todos$text(todo)),
 			selected);
 		return A2(
 			elm$html$Html$li,
@@ -5635,7 +5642,10 @@ var author$project$Main$viewEntry = F2(
 				_List_fromArray(
 					[
 						elm$html$Html$Events$onDoubleClick(
-						A2(author$project$Main$Edit, id, entry))
+						A2(
+							author$project$Main$Edit,
+							todo,
+							author$project$Todos$text(todo)))
 					]),
 				editingAttributes),
 			_List_fromArray(
@@ -5653,7 +5663,8 @@ var author$project$Main$viewEntry = F2(
 							_List_Nil,
 							_List_fromArray(
 								[
-									elm$html$Html$text(entry)
+									elm$html$Html$text(
+									author$project$Todos$text(todo))
 								]))
 						])),
 					A2(
@@ -5663,9 +5674,9 @@ var author$project$Main$viewEntry = F2(
 							elm$html$Html$Attributes$class('edit'),
 							elm$html$Html$Attributes$value(editValue),
 							elm$html$Html$Events$onInput(
-							author$project$Main$Edit(id)),
+							author$project$Main$Edit(todo)),
 							author$project$Main$onEnter(
-							A2(author$project$Main$Update, id, editValue))
+							author$project$Main$Update(editValue))
 						]),
 					_List_Nil)
 				]));
@@ -10004,4 +10015,4 @@ var elm$browser$Browser$sandbox = function (impl) {
 var author$project$Main$main = elm$browser$Browser$sandbox(
 	{init: author$project$Main$init, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{},"unions":{"Main.Msg":{"args":[],"tags":{"Change":["String.String"],"Add":["String.String"],"Edit":["Basics.Int","String.String"],"Update":["Basics.Int","String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Todos.Todo":{"args":[],"type":"( Basics.Int, String.String )"}},"unions":{"Main.Msg":{"args":[],"tags":{"Change":["String.String"],"Add":["String.String"],"Edit":["Todos.Todo","String.String"],"Update":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"String.String":{"args":[],"tags":{"String":[]}}}}})}});}(this));

@@ -46,16 +46,17 @@ type Msg
     = Change String
     | Add String
     | Edit Todo String
-    | Update Todo
+    | Update String
 
 
-rename : Todo -> List Todo -> List Todo
-rename newTodo list =
+rename : List Todo -> Todo -> List Todo
+rename list newTodo =
     list
         |> List.map
             (\todo ->
                 if Tuple.first newTodo == Todos.id todo then
                     newTodo
+
                 else
                     todo
             )
@@ -74,13 +75,13 @@ update msg model =
                 , lastId = model.lastId + 1
             }
 
-        Edit todo text ->
+        Edit todo string ->
             { model
-                | selected = Just todo
+                | selected = Just (Todos.changeText todo string)
             }
 
-        Update todo ->
-            { model | entries = rename todo model.entries, selected = Nothing }
+        Update _ ->
+            { model | entries = Maybe.map (rename model.entries) model.selected |> Maybe.withDefault model.entries, selected = Nothing }
 
 
 
@@ -90,9 +91,11 @@ update msg model =
 viewEntry : Maybe Todo -> Todo -> Html Msg
 viewEntry selected todo =
     let
+        isEditing : Bool
         isEditing =
             Todos.isEditing selected todo
 
+        editingAttributes : List (Html.Attribute Msg)
         editingAttributes =
             if isEditing then
                 [ class "editing" ]
@@ -103,7 +106,7 @@ viewEntry selected todo =
         editValue =
             selected |> Maybe.map Todos.text >> Maybe.withDefault (Todos.text todo)
     in
-    li ([ onDoubleClick (Edit todo) ] ++ editingAttributes)
+    li ([ onDoubleClick (Edit todo (Todos.text todo)) ] ++ editingAttributes)
         [ div [ class "view" ]
             [ label [] [ text (Todos.text todo) ]
             ]
